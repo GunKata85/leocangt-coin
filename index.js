@@ -20,13 +20,13 @@ const ALERT_THRESHOLDS = {
   normal:  { volMult: 3,  pricePct: 1, ratePerSec: 0.05 },
   strong:  { volMult: 5,  pricePct: 2, ratePerSec: 0.12 },
   extreme: { volMult: 10, pricePct: 3, ratePerSec: 0.25 },
-  insane:  { volMult: 15, pricePct: 5, ratePerSec: 0.5 }
+  insane:  { volMult: 15, pricePct: 5, ratePerSec: 1.0 }
 };
 const thresholds = ALERT_THRESHOLDS[SENSITIVITY] || ALERT_THRESHOLDS.strong;
 
-const RATE_LOOKBACK_MS = 8000;   // 초당 상승률 계산에 사용할 최근 시간 창(8초)
-const RATE_MIN_SAMPLES_MS = 5000; // 최소 이만큼의 기록이 쌓여야 상승속도 판정(5초)
-const UI_TICK_MS = 5000;
+const RATE_LOOKBACK_MS = 5000;   // 초당 상승률 계산에 사용할 최근 시간 창(5초)
+const RATE_MIN_SAMPLES_MS = 3000; // 최소 이만큼의 기록이 쌓여야 상승속도 판정(3초)
+const UI_TICK_MS = 1000; // 1초마다 판정 (초당 상승속도를 정밀하게 잡기 위해 세분화)
 const CHUNK_SIZE = 180;
 
 if(!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID){
