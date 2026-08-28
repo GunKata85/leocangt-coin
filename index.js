@@ -10,7 +10,7 @@ import 'dotenv/config';
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-const SENSITIVITY = process.env.SENSITIVITY || 'strong'; // normal | strong | extreme | insane
+const SENSITIVITY = (process.env.SENSITIVITY || 'strong').toLowerCase(); // normal | strong | extreme | insane
 const DIRECTION = process.env.DIRECTION || 'all';         // all | up | down
 const EXIT_THRESHOLD_PCT = parseFloat(process.env.EXIT_THRESHOLD_PCT || '5'); // 고점대비 이탈 기준(%)
 const MIN_QUOTE_VOLUME = parseFloat(process.env.MIN_QUOTE_VOLUME || '50000'); // 감시 대상 최소 24h 거래대금(USDT)
@@ -23,6 +23,9 @@ const ALERT_THRESHOLDS = {
   insane:  { volMult: 15, pricePct: 5, ratePerSec: 1.0 }
 };
 const thresholds = ALERT_THRESHOLDS[SENSITIVITY] || ALERT_THRESHOLDS.strong;
+if(!ALERT_THRESHOLDS[SENSITIVITY]){
+  console.warn(`[경고] SENSITIVITY="${SENSITIVITY}"는 알 수 없는 값입니다 (normal/strong/extreme/insane 중 하나여야 함). 기본값 strong으로 동작합니다.`);
+}
 
 const RATE_LOOKBACK_MS = 5000;   // 초당 상승률 계산에 사용할 최근 시간 창(5초)
 const RATE_MIN_SAMPLES_MS = 3000; // 최소 이만큼의 기록이 쌓여야 상승속도 판정(3초)
