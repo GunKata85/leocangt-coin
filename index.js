@@ -275,7 +275,11 @@ function tick(){
   const { newOnes, exitFires } = updateTracking(hits, allResults);
 
   newOnes.forEach(h=>{
-    const msg = `🚀 <b>급등 감지: ${h.symbol.replace('USDT','')}</b>\n가격: ${h.price}\n거래량 배율: ${h.volMult.toFixed(1)}배\n초당 상승속도: ${h.ratePerSec.toFixed(2)}%/초\n10분 변동: ${h.pricePct.toFixed(2)}%`;
+    const isUp = h.pricePct >= 0;
+    const icon = isUp ? '🚀' : '📉';
+    const label = isUp ? '급등 감지' : '급락 감지';
+    const rateLabel = isUp ? '초당 상승속도' : '초당 하락속도';
+    const msg = `${icon} <b>${label}: ${h.symbol.replace('USDT','')}</b>\n가격: ${h.price}\n거래량 배율: ${h.volMult.toFixed(1)}배\n${rateLabel}: ${Math.abs(h.ratePerSec).toFixed(2)}%/초\n10분 변동: ${h.pricePct.toFixed(2)}%`;
     console.log(msg.replace(/<\/?b>/g,''));
     sendTelegram(msg);
   });
