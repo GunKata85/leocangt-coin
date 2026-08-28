@@ -14,6 +14,7 @@ const SENSITIVITY = process.env.SENSITIVITY || 'strong'; // normal | strong | ex
 const DIRECTION = process.env.DIRECTION || 'all';         // all | up | down
 const EXIT_THRESHOLD_PCT = parseFloat(process.env.EXIT_THRESHOLD_PCT || '5'); // 고점대비 이탈 기준(%)
 const MIN_QUOTE_VOLUME = parseFloat(process.env.MIN_QUOTE_VOLUME || '50000'); // 감시 대상 최소 24h 거래대금(USDT)
+const FUTURES_ONLY = (process.env.FUTURES_ONLY || 'true').toLowerCase() === 'true'; // true면 선물(무기한) 상장된 코인만 감시
 
 const ALERT_THRESHOLDS = {
   normal:  { volMult: 3,  pricePct: 1, ratePerSec: 0.05 },
@@ -53,16 +54,45 @@ async function sendTelegram(text){
 }
 
 // ===== 후보 심볼 목록 구성 =====
+// 바이낸스 선물(무기한)에 상장된 심볼 목록 (FUTURES_ONLY=true일 때 필터링용)
+async function getFuturesSymbols(){
+  try{
+    const res = await fetch('https://fapi.binance.com/fapi/v1/exchangeInfo');
+    if(!res.ok) return null;
+    const data = await res.json();
+    return new Set(
+      data.symbols
+        .filter(s => s.contractType === 'PERPETUAL' && s.status === 'TRADING')
+        .map(s => s.symbol)
+    );
+  }catch(e){
+    console.error('선물 심볼 목록 조회 실패, 필터 없이 진행:', e.message);
+    return null;
+  }
+}
+
 async function buildCandidatePool(){
   const res = await fetch('https://api.binance.com/api/v3/ticker/24hr');
   if(!res.ok) throw new Error('심볼 목록을 불러오지 못했습니다.');
   const data = await res.json();
-  return data
+
+  let pool = data
     .filter(d => d.symbol.endsWith('USDT') && !/(UP|DOWN|BULL|BEAR)USDT$/.test(d.symbol))
     .map(d => ({ symbol: d.symbol, quoteVolume: parseFloat(d.quoteVolume) }))
     .filter(d => d.quoteVolume >= MIN_QUOTE_VOLUME)
     .sort((a,b)=> b.quoteVolume - a.quoteVolume)
     .map(d => d.symbol);
+
+  if(FUTURES_ONLY){
+    const futuresSymbols = await getFuturesSymbols();
+    if(futuresSymbols){
+      const before = pool.length;
+      pool = pool.filter(s => futuresSymbols.has(s));
+      console.log(`선물 상장 코인만 필터링: ${before}개 → ${pool.length}개`);
+    }
+  }
+
+  return pool;
 }
 
 // ===== 초기 히스토리 시딩 =====
