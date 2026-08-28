@@ -24,8 +24,8 @@ const ALERT_THRESHOLDS = {
 };
 const thresholds = ALERT_THRESHOLDS[SENSITIVITY] || ALERT_THRESHOLDS.strong;
 
-const RATE_LOOKBACK_MS = 20000;
-const RATE_MIN_SAMPLES_MS = 10000;
+const RATE_LOOKBACK_MS = 8000;   // 초당 상승률 계산에 사용할 최근 시간 창(8초)
+const RATE_MIN_SAMPLES_MS = 5000; // 최소 이만큼의 기록이 쌓여야 상승속도 판정(5초)
 const UI_TICK_MS = 5000;
 const CHUNK_SIZE = 180;
 
