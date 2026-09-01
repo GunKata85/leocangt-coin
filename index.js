@@ -20,7 +20,7 @@ const ALERT_THRESHOLDS = {
   normal:  { volMult: 3,  pricePct: 1, ratePerSec: 0.05 },
   strong:  { volMult: 5,  pricePct: 2, ratePerSec: 0.12 },
   extreme: { volMult: 10, pricePct: 3, ratePerSec: 0.25 },
-  insane:  { volMult: 15, pricePct: 5, ratePerSec: 1.0 }
+  insane:  { volMult: 5, pricePct: 2, ratePerSec: 0.7 }
 };
 const thresholds = ALERT_THRESHOLDS[SENSITIVITY] || ALERT_THRESHOLDS.strong;
 if(!ALERT_THRESHOLDS[SENSITIVITY]){
