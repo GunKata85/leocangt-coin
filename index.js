@@ -13,7 +13,7 @@ const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 const SENSITIVITY = (process.env.SENSITIVITY || 'strong').toLowerCase(); // normal | strong | extreme | insane
 const DIRECTION = process.env.DIRECTION || 'all';         // all | up | down
 const EXIT_THRESHOLD_PCT = parseFloat(process.env.EXIT_THRESHOLD_PCT || '5'); // 고점대비 이탈 기준(%)
-const FOLLOWUP_DELAY_SEC = parseFloat(process.env.FOLLOWUP_DELAY_SEC || '15'); // 감지 후 몇 초 뒤에 "진짜인지" 확인 메시지 보낼지
+const FOLLOWUP_DELAY_SEC = parseFloat(process.env.FOLLOWUP_DELAY_SEC || '10'); // 감지 후 몇 초 뒤에 "진짜인지" 확인 메시지 보낼지
 const FOLLOWUP_DELAY_MS = FOLLOWUP_DELAY_SEC * 1000;
 const FOLLOWUP_CONFIRM_PCT = parseFloat(process.env.FOLLOWUP_CONFIRM_PCT || '1.5'); // 감지가 진짜였다고 볼 최소 추가 상승폭(%)
 const MIN_QUOTE_VOLUME = parseFloat(process.env.MIN_QUOTE_VOLUME || '50000'); // 감시 대상 최소 24h 거래대금(USDT)
@@ -30,8 +30,8 @@ if(!ALERT_THRESHOLDS[SENSITIVITY]){
   console.warn(`[경고] SENSITIVITY="${SENSITIVITY}"는 알 수 없는 값입니다 (normal/strong/extreme/insane 중 하나여야 함). 기본값 strong으로 동작합니다.`);
 }
 
-const RATE_LOOKBACK_MS = 5000;   // 초당 상승률 계산에 사용할 최근 시간 창(5초)
-const RATE_MIN_SAMPLES_MS = 3000; // 최소 이만큼의 기록이 쌓여야 상승속도 판정(3초)
+const RATE_LOOKBACK_MS = 4000;   // 초당 상승률 계산에 사용할 최근 시간 창(4초)
+const RATE_MIN_SAMPLES_MS = 2000; // 최소 이만큼의 기록이 쌓여야 상승속도 판정(2초)
 const UI_TICK_MS = 1000; // 1초마다 판정 (초당 상승속도를 정밀하게 잡기 위해 세분화)
 const CHUNK_SIZE = 180;
 
