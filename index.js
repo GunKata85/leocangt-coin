@@ -13,9 +13,9 @@ const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 const SENSITIVITY = (process.env.SENSITIVITY || 'strong').toLowerCase(); // normal | strong | extreme | insane
 const DIRECTION = process.env.DIRECTION || 'all';         // all | up | down
 const EXIT_THRESHOLD_PCT = parseFloat(process.env.EXIT_THRESHOLD_PCT || '5'); // 고점대비 이탈 기준(%)
-const FOLLOWUP_DELAY_SEC = parseFloat(process.env.FOLLOWUP_DELAY_SEC || '10'); // 감지 후 몇 초 뒤에 "진짜인지" 확인 메시지 보낼지
+const FOLLOWUP_DELAY_SEC = parseFloat(process.env.FOLLOWUP_DELAY_SEC || '5'); // 감지 후 몇 초 뒤에 "진짜인지" 확인 메시지 보낼지
 const FOLLOWUP_DELAY_MS = FOLLOWUP_DELAY_SEC * 1000;
-const FOLLOWUP_CONFIRM_PCT = parseFloat(process.env.FOLLOWUP_CONFIRM_PCT || '1.5'); // 감지가 진짜였다고 볼 최소 추가 상승폭(%)
+const FOLLOWUP_CONFIRM_PCT = parseFloat(process.env.FOLLOWUP_CONFIRM_PCT || '1.0'); // 감지가 진짜였다고 볼 최소 추가 상승폭(%)
 const MIN_QUOTE_VOLUME = parseFloat(process.env.MIN_QUOTE_VOLUME || '50000'); // 감시 대상 최소 24h 거래대금(USDT)
 const FUTURES_ONLY = (process.env.FUTURES_ONLY || 'true').toLowerCase() === 'true'; // true면 선물(무기한) 상장된 코인만 감시
 
