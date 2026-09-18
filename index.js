@@ -13,6 +13,9 @@ const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 const SENSITIVITY = (process.env.SENSITIVITY || 'strong').toLowerCase(); // normal | strong | extreme | insane
 const DIRECTION = process.env.DIRECTION || 'all';         // all | up | down
 const EXIT_THRESHOLD_PCT = parseFloat(process.env.EXIT_THRESHOLD_PCT || '5'); // 고점대비 이탈 기준(%)
+const FOLLOWUP_DELAY_SEC = parseFloat(process.env.FOLLOWUP_DELAY_SEC || '15'); // 감지 후 몇 초 뒤에 "진짜인지" 확인 메시지 보낼지
+const FOLLOWUP_DELAY_MS = FOLLOWUP_DELAY_SEC * 1000;
+const FOLLOWUP_CONFIRM_PCT = parseFloat(process.env.FOLLOWUP_CONFIRM_PCT || '1.5'); // 감지가 진짜였다고 볼 최소 추가 상승폭(%)
 const MIN_QUOTE_VOLUME = parseFloat(process.env.MIN_QUOTE_VOLUME || '50000'); // 감시 대상 최소 24h 거래대금(USDT)
 const FUTURES_ONLY = (process.env.FUTURES_ONLY || 'true').toLowerCase() === 'true'; // true면 선물(무기한) 상장된 코인만 감시
 
@@ -233,7 +236,8 @@ function updateTracking(hits, allResults){
   hits.forEach(h=>{
     if(!trackedCoins.has(h.symbol)){
       trackedCoins.set(h.symbol, {
-        entry: h.price, peak: h.price, last: h.price, exitWarned: false, currentlyHit: true
+        entry: h.price, peak: h.price, last: h.price, exitWarned: false, currentlyHit: true,
+        detectedAt: Date.now(), followUpSent: false
       });
       newOnes.push(h);
     }
@@ -260,7 +264,17 @@ function updateTracking(hits, allResults){
     }
   });
 
-  return { newOnes, exitFires };
+  // 감지 후 FOLLOWUP_DELAY_MS 지난 시점에 "진짜 갔는지 반짝하고 끝났는지" 한 번 확인
+  const followUps = [];
+  trackedCoins.forEach((t, sym)=>{
+    if(t.followUpSent) return;
+    if(Date.now() - t.detectedAt < FOLLOWUP_DELAY_MS) return;
+    t.followUpSent = true;
+    const changeSinceAlert = t.entry ? ((t.last - t.entry) / t.entry * 100) : 0;
+    followUps.push({ symbol: sym, entry: t.entry, current: t.last, changeSinceAlert });
+  });
+
+  return { newOnes, exitFires, followUps };
 }
 
 // ===== 메인 틱 =====
@@ -275,7 +289,7 @@ function tick(){
   });
 
   const { hits, allResults } = computeHits();
-  const { newOnes, exitFires } = updateTracking(hits, allResults);
+  const { newOnes, exitFires, followUps } = updateTracking(hits, allResults);
 
   newOnes.forEach(h=>{
     const isUp = h.pricePct >= 0;
@@ -289,6 +303,21 @@ function tick(){
 
   exitFires.forEach(e=>{
     const msg = `🔻 <b>이탈 경고: ${e.symbol.replace('USDT','')}</b>\n현재가: ${e.price}\n고점 대비: -${e.drawdown.toFixed(1)}%`;
+    console.log(msg.replace(/<\/?b>/g,''));
+    sendTelegram(msg);
+  });
+
+  followUps.forEach(f=>{
+    let icon, verdict;
+    if(f.changeSinceAlert >= FOLLOWUP_CONFIRM_PCT){
+      icon = '✅'; verdict = `지속 상승 중 — 진짜일 가능성 높음`;
+    }else if(f.changeSinceAlert <= -FOLLOWUP_CONFIRM_PCT){
+      icon = '❌'; verdict = `이미 꺾임 — 반짝 급등이었을 가능성`;
+    }else{
+      icon = '😐'; verdict = `횡보 중 — 애매함, 신중히 판단`;
+    }
+    const sign = f.changeSinceAlert >= 0 ? '+' : '';
+    const msg = `${icon} <b>${FOLLOWUP_DELAY_SEC}초 후 확인: ${f.symbol.replace('USDT','')}</b>\n${verdict}\n감지 시점 대비: ${sign}${f.changeSinceAlert.toFixed(2)}%\n감지가: ${f.entry} → 현재가: ${f.current}`;
     console.log(msg.replace(/<\/?b>/g,''));
     sendTelegram(msg);
   });
