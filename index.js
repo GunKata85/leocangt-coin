@@ -15,7 +15,7 @@ const DIRECTION = process.env.DIRECTION || 'all';         // all | up | down
 const EXIT_THRESHOLD_PCT = parseFloat(process.env.EXIT_THRESHOLD_PCT || '5'); // 고점대비 이탈 기준(%)
 const FOLLOWUP_DELAY_SEC = parseFloat(process.env.FOLLOWUP_DELAY_SEC || '5'); // 감지 후 몇 초 뒤에 "진짜인지" 확인 메시지 보낼지
 const FOLLOWUP_DELAY_MS = FOLLOWUP_DELAY_SEC * 1000;
-const FOLLOWUP_CONFIRM_PCT = parseFloat(process.env.FOLLOWUP_CONFIRM_PCT || '1.0'); // 감지가 진짜였다고 볼 최소 추가 상승폭(%)
+const FOLLOWUP_CONFIRM_PCT = parseFloat(process.env.FOLLOWUP_CONFIRM_PCT || '0.5'); // 감지가 진짜였다고 볼 최소 추가 상승폭(%)
 const BASELINE_MINUTES = parseInt(process.env.BASELINE_MINUTES || '3', 10); // 거래량/가격변동 기준으로 볼 시간창(분) - 짧을수록 "막 터지는 순간"에 더 민감
 const MIN_QUOTE_VOLUME = parseFloat(process.env.MIN_QUOTE_VOLUME || '50000'); // 감시 대상 최소 24h 거래대금(USDT)
 const FUTURES_ONLY = (process.env.FUTURES_ONLY || 'true').toLowerCase() === 'true'; // true면 선물(무기한) 상장된 코인만 감시
@@ -24,15 +24,15 @@ const ALERT_THRESHOLDS = {
   normal:  { volMult: 3,  pricePct: 1, ratePerSec: 0.05 },
   strong:  { volMult: 5,  pricePct: 2, ratePerSec: 0.12 },
   extreme: { volMult: 10, pricePct: 3, ratePerSec: 0.25 },
-  insane:  { volMult: 5, pricePct: 2, ratePerSec: 0.7 }
+  insane:  { volMult: 2, pricePct: 1, ratePerSec: 0.7 }
 };
 const thresholds = ALERT_THRESHOLDS[SENSITIVITY] || ALERT_THRESHOLDS.strong;
 if(!ALERT_THRESHOLDS[SENSITIVITY]){
   console.warn(`[경고] SENSITIVITY="${SENSITIVITY}"는 알 수 없는 값입니다 (normal/strong/extreme/insane 중 하나여야 함). 기본값 strong으로 동작합니다.`);
 }
 
-const RATE_LOOKBACK_MS = 4000;   // 초당 상승률 계산에 사용할 최근 시간 창(4초)
-const RATE_MIN_SAMPLES_MS = 2000; // 최소 이만큼의 기록이 쌓여야 상승속도 판정(2초)
+const RATE_LOOKBACK_MS = 3000;   // 초당 상승률 계산에 사용할 최근 시간 창(3초)
+const RATE_MIN_SAMPLES_MS = 1000; // 최소 이만큼의 기록이 쌓여야 상승속도 판정(1초, 사실상 가능한 최소치)
 const UI_TICK_MS = 1000; // 1초마다 판정 (초당 상승속도를 정밀하게 잡기 위해 세분화)
 const CHUNK_SIZE = 180;
 
