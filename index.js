@@ -16,6 +16,7 @@ const EXIT_THRESHOLD_PCT = parseFloat(process.env.EXIT_THRESHOLD_PCT || '5'); //
 const FOLLOWUP_DELAY_SEC = parseFloat(process.env.FOLLOWUP_DELAY_SEC || '5'); // 감지 후 몇 초 뒤에 "진짜인지" 확인 메시지 보낼지
 const FOLLOWUP_DELAY_MS = FOLLOWUP_DELAY_SEC * 1000;
 const FOLLOWUP_CONFIRM_PCT = parseFloat(process.env.FOLLOWUP_CONFIRM_PCT || '1.0'); // 감지가 진짜였다고 볼 최소 추가 상승폭(%)
+const BASELINE_MINUTES = parseInt(process.env.BASELINE_MINUTES || '3', 10); // 거래량/가격변동 기준으로 볼 시간창(분) - 짧을수록 "막 터지는 순간"에 더 민감
 const MIN_QUOTE_VOLUME = parseFloat(process.env.MIN_QUOTE_VOLUME || '50000'); // 감시 대상 최소 24h 거래대금(USDT)
 const FUTURES_ONLY = (process.env.FUTURES_ONLY || 'true').toLowerCase() === 'true'; // true면 선물(무기한) 상장된 코인만 감시
 
@@ -112,7 +113,7 @@ async function seedSymbolHistory(symbols){
       const i = idx++;
       const symbol = symbols[i];
       try{
-        const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1m&limit=10`);
+        const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1m&limit=${BASELINE_MINUTES}`);
         if(res.ok){
           const kl = await res.json();
           if(Array.isArray(kl) && kl.length > 0){
@@ -164,7 +165,7 @@ function openOneStream(chunk){
 
       if(k.x){
         st.closed.push({ open: st.curOpen, quoteVol: st.curQuoteVol });
-        if(st.closed.length > 10) st.closed.shift();
+        if(st.closed.length > BASELINE_MINUTES) st.closed.shift();
       }
     }catch(e){ /* 무시 */ }
   });
@@ -296,7 +297,7 @@ function tick(){
     const icon = isUp ? '🚀' : '📉';
     const label = isUp ? '급등 감지' : '급락 감지';
     const rateLabel = isUp ? '초당 상승속도' : '초당 하락속도';
-    const msg = `${icon} <b>${label}: ${h.symbol.replace('USDT','')}</b>\n가격: ${h.price}\n거래량 배율: ${h.volMult.toFixed(1)}배\n${rateLabel}: ${Math.abs(h.ratePerSec).toFixed(2)}%/초\n10분 변동: ${h.pricePct.toFixed(2)}%`;
+    const msg = `${icon} <b>${label}: ${h.symbol.replace('USDT','')}</b>\n가격: ${h.price}\n거래량 배율: ${h.volMult.toFixed(1)}배\n${rateLabel}: ${Math.abs(h.ratePerSec).toFixed(2)}%/초\n${BASELINE_MINUTES}분 변동: ${h.pricePct.toFixed(2)}%`;
     console.log(msg.replace(/<\/?b>/g,''));
     sendTelegram(msg);
   });
